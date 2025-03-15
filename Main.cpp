@@ -22,8 +22,8 @@ const int RadiusCheckers = 16;
 
 const int windowShift = 15;
 
-const int White = 0;
-const int Black = 1;
+const int White = 1;
+const int Black = -1;
 
 /* ||      CONST          || */
 
@@ -31,7 +31,7 @@ const int Black = 1;
 
 Checkers Board[ROWS][COLOMN];
 bool FlagComplCheckers = false;
-
+bool flagChoiseCheckers = false;
 bool ChoiseCheckers = false;
 
 HDC hdc;
@@ -73,7 +73,7 @@ void ComplCheckers() {
                     Board[y][x].Plot = true;
                 }
             }
-            else { 
+            else {
                 Board[y][x].value = WhitePlit;
                 Board[y][x].Plot = true;
             }
@@ -129,7 +129,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     return 0;
 }
 
-void DrawCrown(HDC hdc, int Line, int Colomn, int posY, int posX);
+//void DrawCrown(HDC hdc, int Line, int Colomn, int posY, int posX);
 
 void DrawBoard(HDC hdc, HWND hwnd) {
 
@@ -144,11 +144,11 @@ void DrawBoard(HDC hdc, HWND hwnd) {
             if ((y + x) % 2 != 0) {
                 FillRect(hdc, &cellRect, (HBRUSH)GetStockObject(BLACK_BRUSH));//Black plit
             }
-            else { 
+            else {
                 FillRect(hdc, &cellRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH)); //White plit
             }
             if (y == ChoiseLine && x == ChoiseColomn) { //green grid, Choise plit
-                FrameRect(hdc, &cellRect, (HBRUSH)GetStockObject(RGB(0, 128, 0))); 
+                FrameRect(hdc, &cellRect, (HBRUSH)GetStockObject(RGB(0, 128, 0)));
             }
 
             //Draw checker
@@ -173,7 +173,7 @@ void DrawBoard(HDC hdc, HWND hwnd) {
                 Ellipse(hdc, posX - RadiusCheckers / 2, posY - RadiusCheckers / 2, posX + RadiusCheckers / 2, posY + RadiusCheckers / 2);
 
                 //Draw Lady
-                DrawCrown(hdc, y, x, posY, posX);
+                //DrawCrown(hdc, y, x, posY, posX);
                 SelectObject(hdc, oldBrush);
                 DeleteObject(checkerBrush);
             }
@@ -212,15 +212,27 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
             // Validate row and col to prevent out-of-bounds access
             if (col >= 0 && col < COLOMN && row >= 0 && row < ROWS) {
-                if (Board[row][col].Plot != true) { //Chosie checkers
-                    ChoiseLine = row;
-                    ChoiseColomn = col;
-                    TempChoiseColomn = col;
-                    TempChoiseLine = row;
-                    TempChoiseColor = Board[row][col].color;
-                }
                 ChoiseLine = row;
                 ChoiseColomn = col;
+                if (Board[row][col].Plot != true) { //Choise checkers
+                    TempChoiseColomn = col;
+                    TempChoiseLine = row;
+                    flagChoiseCheckers = true;
+                }
+                else {
+                    if (flagChoiseCheckers == true) {
+                        Board[TempChoiseLine][TempChoiseColomn].Move
+                        (Board[ChoiseLine][ChoiseColomn], Board, ChoiseLine, ChoiseColomn);
+                        flagChoiseCheckers = false;
+
+                        //char buffer[256]; // Буфер для форматирования текста
+                        //sprintf_s(buffer, 256, "error, Checker: %d, Color: %d, Plot: %d", Board[ChoiseLine][ChoiseColomn].Checker, Board[ChoiseLine][ChoiseColomn].color, Board[ChoiseLine][ChoiseColomn].Plot); // Форматируем строку
+
+                        //MessageBoxA(NULL, buffer, "Debug Values", MB_OK); // Отображаем MessageBox
+
+                        InvalidateRect(hwnd, NULL, TRUE); //Update Areal Window
+                    }
+                }
                 InvalidateRect(hwnd, NULL, TRUE); //Update Areal Window
             }
         }
@@ -246,62 +258,62 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-HBITMAP LoadBitmapFromFile(const WCHAR* filename) {
-    Gdiplus::Bitmap* bitmap = Gdiplus::Bitmap::FromFile(filename);
-    if (bitmap == nullptr) {
-        return nullptr;
-    }
+//HBITMAP LoadBitmapFromFile(const WCHAR* filename) {
+//    Gdiplus::Bitmap* bitmap = Gdiplus::Bitmap::FromFile(filename);
+//    if (bitmap == nullptr) {
+//        return nullptr;
+//    }
+//
+//    Gdiplus::Status status = bitmap->GetLastStatus();
+//    if (status != Gdiplus::Ok) {
+//        delete bitmap;
+//        return nullptr;
+//    }
+//
+//    HBITMAP hBitmap = NULL; // Local hBitmap to return
+//    status = bitmap->GetHBITMAP(Gdiplus::Color::Transparent, &hBitmap);
+//    if (status != Gdiplus::Ok) {
+//        delete bitmap;
+//        return nullptr;
+//    }
+//
+//    delete bitmap;
+//    return hBitmap;
+//}
 
-    Gdiplus::Status status = bitmap->GetLastStatus();
-    if (status != Gdiplus::Ok) {
-        delete bitmap;
-        return nullptr;
-    }
-
-    HBITMAP hBitmap = NULL; // Local hBitmap to return
-    status = bitmap->GetHBITMAP(Gdiplus::Color::Transparent, &hBitmap);
-    if (status != Gdiplus::Ok) {
-        delete bitmap;
-        return nullptr;
-    }
-
-    delete bitmap;
-    return hBitmap;
-}
-
-void DrawCrown(HDC hdc, int Line, int Colomn, int posY, int posX) {
-    int SmallRadius = 8;
-    HBITMAP hBitmap = NULL; // Local hBitmap
-
-    if (Board[Line][Colomn].color == White) {
-        hBitmap = LoadBitmapFromFile(L"resource/BlackCrown.png"); // Assign a result
-    }
-    else {
-        hBitmap = LoadBitmapFromFile(L"C:\\Nikita\\source\\repos\\Checkers\\resource\\WhiteCrown.png"); // Assign a result
-    }
-
-    if (hBitmap == NULL) {
-        //The loading failed. There are no errors, then most likely it cannot access the function.
-        return;
-    }
-
-    BITMAP bm;
-    GetObject(hBitmap, sizeof(BITMAP), &bm); //Get bitmap metadata.
-    int width = bm.bmWidth;
-    int height = bm.bmHeight;
-
-    // Create a compatible memory DC
-    HDC hMemDC = CreateCompatibleDC(hdc);
-    if (hMemDC != NULL) {
-        // Select the bitmap into the memory DC
-        HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
-
-        // Copy the bitmap to the window at the desired location
-        BitBlt(hdc, posY - 4, posX - 4, width, height, hMemDC, 0, 0, SRCCOPY);
-
-        // Restore the old bitmap and delete the memory DC
-        SelectObject(hMemDC, hOldBitmap);
-        DeleteDC(hMemDC);
-    }
-    DeleteObject(hBitmap);   //Delete object to prevent memory leaks
-}
+//void DrawCrown(HDC hdc, int Line, int Colomn, int posY, int posX) {
+//    int SmallRadius = 8;
+//    HBITMAP hBitmap = NULL; // Local hBitmap
+//
+//    if (Board[Line][Colomn].color == White) {
+//        hBitmap = LoadBitmapFromFile(L"resource/BlackCrown.png"); // Assign a result
+//    }
+//    else {
+//        hBitmap = LoadBitmapFromFile(L"C:\\Nikita\\source\\repos\\Checkers\\resource\\WhiteCrown.png"); // Assign a result
+//    }
+//
+//    if (hBitmap == NULL) {
+//        //The loading failed. There are no errors, then most likely it cannot access the function.
+//        return;
+//    }
+//
+//    BITMAP bm;
+//    GetObject(hBitmap, sizeof(BITMAP), &bm); //Get bitmap metadata.
+//    int width = bm.bmWidth;
+//    int height = bm.bmHeight;
+//
+//    // Create a compatible memory DC
+//    HDC hMemDC = CreateCompatibleDC(hdc);
+//    if (hMemDC != NULL) {
+//        // Select the bitmap into the memory DC
+//        HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
+//
+//        // Copy the bitmap to the window at the desired location
+//        BitBlt(hdc, posY - 4, posX - 4, width, height, hMemDC, 0, 0, SRCCOPY);
+//
+//        // Restore the old bitmap and delete the memory DC
+//        SelectObject(hMemDC, hOldBitmap);
+//        DeleteDC(hMemDC);
+//    }
+//    DeleteObject(hBitmap);   //Delete object to prevent memory leaks
+//}
