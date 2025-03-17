@@ -41,7 +41,7 @@ HBITMAP hBitmap = NULL;
 
 /* ||       GAME        ||*/
 
-int move;
+int MOVE = 0;
 int ChoiseLine; //Choise Plit
 int ChoiseColomn;
 
@@ -58,18 +58,16 @@ void ComplCheckers() {
             Board[y][x].posY = y;
             Board[y][x].posX = x;
             if ((y + x) % 2 != 0) {
+                Board[y][x].value = BlackPlit;
                 if (y < 3) {
                     Board[y][x].Checker = true;
-                    Board[y][x].value = BlackCheckers;
                     Board[y][x].color = Black;
                 }
                 else if (y > 4) {
                     Board[y][x].Checker = true;
-                    Board[y][x].value = WhiteCheckers;
                     Board[y][x].color = White;
                 }
                 else {
-                    Board[y][x].value = BlackPlit;
                     Board[y][x].Plot = true;
                 }
             }
@@ -156,10 +154,10 @@ void DrawBoard(HDC hdc, HWND hwnd) {
                 int posY = (cellSize * y) + 25 + windowShift;//Center Checker
                 int posX = (cellSize * x) + 25 + windowShift;
                 HGDIOBJ checkerBrush = NULL; // Initialize to NULL
-                if (Board[y][x].value == WhiteCheckers) {
+                if (Board[y][x].color == White) {
                     checkerBrush = GetStockObject(WHITE_BRUSH);
                 }
-                else if (Board[y][x].value == BlackCheckers) {
+                else if (Board[y][x].color == Black) {
                     checkerBrush = CreateSolidBrush(RGB(50, 50, 50));
                 }
                 else {
@@ -215,18 +213,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 ChoiseLine = row;
                 ChoiseColomn = col;
                 if (Board[row][col].Plot != true) { //Choise checkers
-                    TempChoiseColomn = col;
-                    TempChoiseLine = row;
-                    flagChoiseCheckers = true;
+                    if ((MOVE % 2 == 0 && Board[row][col].color == White) || (MOVE % 2 != 0 && Board[row][col].color == Black)) {
+                        TempChoiseColomn = col;
+                        TempChoiseLine = row;
+                        flagChoiseCheckers = true;
+                    }
                 }
                 else {
                     if (flagChoiseCheckers == true) {
                         Board[TempChoiseLine][TempChoiseColomn].Move
-                        (Board[ChoiseLine][ChoiseColomn], Board, ChoiseLine, ChoiseColomn);
+                        (Board, ChoiseLine, ChoiseColomn, MOVE);
                         flagChoiseCheckers = false;
 
                         //char buffer[256]; // Буфер для форматирования текста
-                        //sprintf_s(buffer, 256, "error, Checker: %d, Color: %d, Plot: %d", Board[ChoiseLine][ChoiseColomn].Checker, Board[ChoiseLine][ChoiseColomn].color, Board[ChoiseLine][ChoiseColomn].Plot); // Форматируем строку
+                        //sprintf_s(buffer, 256, "error, Checker: %d, Color: %d, Plot: %d", 
+                        //    Board[ChoiseLine][ChoiseColomn].Checker, Board[ChoiseLine][ChoiseColomn].color, Board[ChoiseLine][ChoiseColomn].Plot); // Форматируем строку
 
                         //MessageBoxA(NULL, buffer, "Debug Values", MB_OK); // Отображаем MessageBox
 
